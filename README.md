@@ -7,6 +7,7 @@
 * Supports adding and updating periods and data entries to series.
 * Does NOT support deletion.
 * Can account of continuity of descrete keys (e.g. integers [1; 3] are followed by [4; 5] without gap between tham, which is not true for floats).
+* Supports any type of index.
 * Allows to implement any type of underlaying storage.
 
 This library was created as base container for [go-timeline](https://github.com/nnikolash/go-timeline). 
