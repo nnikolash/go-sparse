@@ -2,13 +2,14 @@
 
 ## What this library can do?
 
-* Provide easy access for **sorted non-continuous series** of any data.
+* Provides easy access for **sorted non-continuous series** of any data.
+* Can retrieve data for specific period, or answer if requested period is fully present.
 * Supports adding and updating periods and data entries to series.
 * Does NOT support deletion.
-* Can account of continuity of descrete keys (e.g. for integers [1; 3] if followed [4; 5] even if 4 != 3, which is not true for floats).
+* Can account of continuity of descrete keys (e.g. integers [1; 3] are followed by [4; 5] without gap between tham, which is not true for floats).
 * Allows to implement any type of underlaying storage.
 
-This library was created as base container for [go-timeline](https://github.com/nnikolash/go-timeline).
+This library was created as base container for [go-timeline](https://github.com/nnikolash/go-timeline). 
 
 ## Usage
 
@@ -16,8 +17,8 @@ This library was created as base container for [go-timeline](https://github.com/
 
 ```
 type TestEvent struct {
-	Time time.Time // In this case Time is index, but it could be anything
-	Data int
+   Time time.Time // In this case Time is index, but it could be anything
+   Data int
 }
 ```
 
