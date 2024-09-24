@@ -136,10 +136,6 @@ func (s *Series[Data, Index]) Get(periodStart, periodEnd Index) ([]Data, error) 
 	return data, nil
 }
 
-// func (s *SparseSeries[Data, Index]) GetAllEntries()(t Index, minPeriodStart, maxPeriodStart Index) ([]Data, error) {
-
-// }
-
 func (s *Series[Data, Index]) GetPeriod(periodStart, periodEnd Index) *SeriesEntry[Data, Index] {
 	if len(s.entries) == 0 {
 		return nil
@@ -267,7 +263,7 @@ func (s *Series[Data, Index]) AddPeriod(periodStart, periodEnd Index, data []Dat
 	return s.mergeWithinRange(periodStart, periodEnd, data, intersectFirstEntryIdx, intersectLastEntryIdx)
 }
 
-func (s *Series[Data, Index]) Restore(state *SparseSeriesState[Data, Index]) error {
+func (s *Series[Data, Index]) Restore(state *SeriesState[Data, Index]) error {
 	for _, entry := range state.Entries {
 		if s.idxCmp(entry.PeriodStart, entry.PeriodEnd) > 0 {
 			return errors.Errorf("storage error: entry period start is greater than period end: %v > %v", entry.PeriodStart, entry.PeriodEnd)
@@ -485,6 +481,6 @@ func (s *Series[Data, Index]) getSmallerIndex(idx1, idx2 Index) Index {
 	return idx2
 }
 
-type SparseSeriesState[Data any, Index any] struct {
-	Entries []*SparseSeriesEntryFields[Data, Index]
+type SeriesState[Data any, Index any] struct {
+	Entries []*SeriesEntryFields[Data, Index]
 }

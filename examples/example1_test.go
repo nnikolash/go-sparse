@@ -16,7 +16,7 @@ type TestEvent struct {
 func TestExample1(t *testing.T) {
 	t.Parallel()
 
-	dataFactory := sparse.NewArrayData[TestEvent, time.Time]
+	dataStorageFactory := sparse.NewArrayData[TestEvent, time.Time]
 
 	getIdx := func(data *TestEvent) time.Time {
 		return data.Time
@@ -30,7 +30,7 @@ func TestExample1(t *testing.T) {
 		return smaller.UnixNano() == bigger.UnixNano()+1
 	}
 
-	series := sparse.NewSeries(dataFactory, getIdx, cmp, areContinuous)
+	series := sparse.NewSeries(dataStorageFactory, getIdx, cmp, areContinuous)
 
 	// Adding period [1; 3]
 	series.AddData([]TestEvent{

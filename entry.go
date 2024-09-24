@@ -28,7 +28,7 @@ type SeriesEntry[Data any, Index any] struct {
 	idxCmp         func(idx1, idx2 Index) int
 	areContinuous  func(smaller, bigger Index) bool
 
-	SparseSeriesEntryFields[Data, Index]
+	SeriesEntryFields[Data, Index]
 }
 
 type PeriodBounds[Index any] struct {
@@ -36,7 +36,7 @@ type PeriodBounds[Index any] struct {
 	PeriodEnd   Index
 }
 
-type SparseSeriesEntryFields[Data any, Index any] struct {
+type SeriesEntryFields[Data any, Index any] struct {
 	PeriodBounds[Index]
 	Data  SeriesData[Data, Index]
 	Empty bool
@@ -209,8 +209,8 @@ func (e *SeriesEntry[Data, Index]) getSmallerIndex(idx1, idx2 Index) Index {
 	return idx2
 }
 
-func (e *SeriesEntry[Data, Index]) Restore(f *SparseSeriesEntryFields[Data, Index]) {
-	e.SparseSeriesEntryFields = *f
+func (e *SeriesEntry[Data, Index]) Restore(f *SeriesEntryFields[Data, Index]) {
+	e.SeriesEntryFields = *f
 }
 
 // func (e *SparseSeriesEntry[Data, Index]) Validate() error {
