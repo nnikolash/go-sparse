@@ -3,8 +3,10 @@
 ## What this library can do?
 
 * Provide easy access for **sorted non-continuous series** of any data.
-* Supports extending and updating the series.
+* Supports adding and updating periods and data entries to series.
+* Does NOT support deletion.
 * Can account of continuity of descrete keys (e.g. for integers [1; 3] if followed [4; 5] even if 4 != 3, which is not true for floats).
+* Allows to implement any type of underlaying storage.
 
 This library was created as base container for [go-timeline](https://github.com/nnikolash/go-timeline).
 
