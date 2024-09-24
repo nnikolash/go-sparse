@@ -25,6 +25,9 @@ type TestEvent struct {
 ###### Create sparse series
 
 ```
+// Data storate factory
+dataStorageFactory := sparse.NewArrayData[TestEvent, time.Time]
+
 // Getter of index
 getIdx := func(data *TestEvent) time.Time {
    return data.Time
@@ -40,7 +43,7 @@ areContinuous := func(smaller, bigger time.Time) bool {
    return smaller.UnixNano() == bigger.UnixNano()+1
 }
 
-series := sparse.NewSeries(dataFactory, getIdx, cmp, areContinuous)
+series := sparse.NewSeries(dataStorageFactory, getIdx, cmp, areContinuous)
 ```
 
 ###### Add some data
