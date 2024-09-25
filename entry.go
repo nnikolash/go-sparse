@@ -213,7 +213,7 @@ func (e *SeriesEntry[Data, Index]) Restore(f *SeriesEntryFields[Data, Index]) {
 	e.SeriesEntryFields = *f
 }
 
-// func (e *SparseSeriesEntry[Data, Index]) Validate() error {
+// func (e *SeriesEntry[Data, Index]) Validate() error {
 // 	if e.Data == nil {
 // 		return errors.New("data storage is not initialized")
 // 	}
