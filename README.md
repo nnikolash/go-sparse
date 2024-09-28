@@ -2,7 +2,7 @@
 
 ## What this library can do?
 
-* Provides easy access for **sorted non-continuous series** of any data.
+* Stores **non-continuous segments** of virtualy continuous data.
 * Can retrieve data for specific period, or answer if requested period is fully present.
 * Supports adding and updating periods and data entries to series.
 * Does NOT support deletion.
