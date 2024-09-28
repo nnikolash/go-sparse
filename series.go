@@ -35,22 +35,22 @@ type Series[Data any, Index any] struct {
 	getIdx        func(data *Data) Index
 	idxCmp        func(idx1, idx2 Index) int
 	areContinuous func(smaller, bigger Index) bool
-	entries       []*SeriesEntry[Data, Index]
+	segments      []*SeriesSegment[Data, Index]
 }
 
-func (s *Series[Data, Index]) Entries() []*SeriesEntry[Data, Index] {
-	return s.entries
+func (s *Series[Data, Index]) Segments() []*SeriesSegment[Data, Index] {
+	return s.segments
 }
 
 // For debugging purposes
-func (s *Series[Data, Index]) EntriesString() string {
+func (s *Series[Data, Index]) SegmentsString() string {
 	var res strings.Builder
-	for _, entry := range s.entries {
+	for _, segment := range s.segments {
 		if res.Len() > 0 {
 			res.WriteString("| ")
 		}
 
-		data, err := entry.Data.Get(entry.PeriodStart, entry.PeriodEnd)
+		data, err := segment.Data.Get(segment.PeriodStart, segment.PeriodEnd)
 		if err != nil {
 			panic(fmt.Errorf("could not get data: %v", err))
 		}
@@ -63,58 +63,58 @@ func (s *Series[Data, Index]) EntriesString() string {
 	return res.String()
 }
 
-func (s *Series[Data, Index]) GetAllEntries() []*SeriesEntry[Data, Index] {
-	if len(s.entries) == 0 {
+func (s *Series[Data, Index]) GetAllSegments() []*SeriesSegment[Data, Index] {
+	if len(s.segments) == 0 {
 		return nil
 	}
 
-	return s.entries
+	return s.segments
 }
 
-func (s *Series[Data, Index]) GetEntry(t Index) *SeriesEntry[Data, Index] {
-	entryIdx, contains := s.findEntryWhichStartsBeforeOrAt(t, false)
-	if entryIdx == -1 && !contains {
+func (s *Series[Data, Index]) GetSegment(t Index) *SeriesSegment[Data, Index] {
+	segmentIdx, contains := s.findSegmentWhichStartsBeforeOrAt(t, false)
+	if segmentIdx == -1 && !contains {
 		return nil
 	}
 
-	return s.entries[entryIdx]
+	return s.segments[segmentIdx]
 }
 
 func (s *Series[Data, Index]) Get(periodStart, periodEnd Index) ([]Data, error) {
-	if len(s.entries) == 0 {
+	if len(s.segments) == 0 {
 		return nil, errors.WithStack(&MissingPeriodError[Index]{PeriodStart: periodStart, PeriodEnd: periodEnd})
 	}
 	if s.idxCmp(periodStart, periodEnd) > 0 {
 		return nil, errors.Errorf("requested period start is greater than period end: %v > %v", periodStart, periodEnd)
 	}
 
-	intersectLastEntryIdx, lastContains := s.findEntryWhichStartsBeforeOrAt(periodEnd, false)
-	if intersectLastEntryIdx == -1 {
+	intersectLastSegmentIdx, lastContains := s.findSegmentWhichStartsBeforeOrAt(periodEnd, false)
+	if intersectLastSegmentIdx == -1 {
 		return nil, errors.WithStack(&MissingPeriodError[Index]{PeriodStart: periodStart, PeriodEnd: periodEnd})
 	}
 
-	intersectFirstEntryIdx, firstContains := s.findEntryWhichStartsBeforeOrAt(periodStart, false)
-	if intersectFirstEntryIdx == -1 {
-		currentBeginning := s.entries[0].PeriodStart
+	intersectFirstSegmentIdx, firstContains := s.findSegmentWhichStartsBeforeOrAt(periodStart, false)
+	if intersectFirstSegmentIdx == -1 {
+		currentBeginning := s.segments[0].PeriodStart
 		return nil, errors.WithStack(&MissingPeriodError[Index]{PeriodStart: periodStart, PeriodEnd: currentBeginning})
 	}
 
-	intersectFirstEntry := s.entries[intersectFirstEntryIdx]
-	intersectLastEntry := s.entries[intersectLastEntryIdx]
+	intersectFirstSegment := s.segments[intersectFirstSegmentIdx]
+	intersectLastSegment := s.segments[intersectLastSegmentIdx]
 
-	if intersectFirstEntryIdx != intersectLastEntryIdx || !firstContains || !lastContains {
+	if intersectFirstSegmentIdx != intersectLastSegmentIdx || !firstContains || !lastContains {
 		if firstContains {
-			periodStart = intersectFirstEntry.PeriodEnd
+			periodStart = intersectFirstSegment.PeriodEnd
 		}
 		if lastContains {
-			periodEnd = intersectLastEntry.PeriodStart
+			periodEnd = intersectLastSegment.PeriodStart
 		}
 		return nil, errors.WithStack(&MissingPeriodError[Index]{PeriodStart: periodStart, PeriodEnd: periodEnd})
 	}
 
-	entry := intersectFirstEntry
+	segment := intersectFirstSegment
 
-	data, err := entry.Data.Get(periodStart, periodEnd)
+	data, err := segment.Data.Get(periodStart, periodEnd)
 	if err != nil {
 		return nil, err
 	}
@@ -136,81 +136,81 @@ func (s *Series[Data, Index]) Get(periodStart, periodEnd Index) ([]Data, error) 
 	return data, nil
 }
 
-func (s *Series[Data, Index]) GetPeriod(periodStart, periodEnd Index) *SeriesEntry[Data, Index] {
-	if len(s.entries) == 0 {
+func (s *Series[Data, Index]) GetPeriod(periodStart, periodEnd Index) *SeriesSegment[Data, Index] {
+	if len(s.segments) == 0 {
 		return nil
 	}
 
-	firstEntryIdx, contains := s.findEntryWhichStartsBeforeOrAt(periodStart, false)
-	if firstEntryIdx == -1 || !contains {
+	firstSegmentIdx, contains := s.findSegmentWhichStartsBeforeOrAt(periodStart, false)
+	if firstSegmentIdx == -1 || !contains {
 		return nil
 	}
 
 	if s.idxCmp(periodStart, periodEnd) == 0 {
-		return s.entries[firstEntryIdx]
+		return s.segments[firstSegmentIdx]
 	}
 
-	lastEntryIdx, contains := s.findEntryWhichStartsBeforeOrAt(periodEnd, false)
-	if lastEntryIdx == -1 || !contains {
+	lastSegmentIdx, contains := s.findSegmentWhichStartsBeforeOrAt(periodEnd, false)
+	if lastSegmentIdx == -1 || !contains {
 		return nil
 	}
 
-	if firstEntryIdx != lastEntryIdx {
+	if firstSegmentIdx != lastSegmentIdx {
 		return nil
 	}
 
-	return s.entries[firstEntryIdx]
+	return s.segments[firstSegmentIdx]
 }
 
-func (s *Series[Data, Index]) GetPeriodClosestFromStart(t Index, nonEmpty bool) *SeriesEntry[Data, Index] {
-	if len(s.entries) == 0 {
+func (s *Series[Data, Index]) GetPeriodClosestFromStart(t Index, nonEmpty bool) *SeriesSegment[Data, Index] {
+	if len(s.segments) == 0 {
 		return nil
 	}
 
-	entryIdx, _ := s.findEntryWhichStartsBeforeOrAt(t, false)
-	if entryIdx == -1 {
+	segmentIdx, _ := s.findSegmentWhichStartsBeforeOrAt(t, false)
+	if segmentIdx == -1 {
 		return nil
 	}
 
 	if nonEmpty {
-		// TODO: this is ineffective... but I just hope there will be not much of empty entries
-		for entryIdx >= 0 && s.entries[entryIdx].Empty {
-			entryIdx--
+		// TODO: this is ineffective... but I just hope there will be not much of empty segments
+		for segmentIdx >= 0 && s.segments[segmentIdx].Empty {
+			segmentIdx--
 		}
-		if entryIdx == -1 {
+		if segmentIdx == -1 {
 			return nil
 		}
 	}
 
-	return s.entries[entryIdx]
+	return s.segments[segmentIdx]
 }
 
-func (s *Series[Data, Index]) GetPeriodClosestFromEnd(t Index, nonEmpty bool) *SeriesEntry[Data, Index] {
-	if len(s.entries) == 0 {
+func (s *Series[Data, Index]) GetPeriodClosestFromEnd(t Index, nonEmpty bool) *SeriesSegment[Data, Index] {
+	if len(s.segments) == 0 {
 		return nil
 	}
 
-	entryIdx, contains := s.findEntryWhichStartsBeforeOrAt(t, false)
-	if entryIdx == -1 {
-		entryIdx = 0
+	segmentIdx, contains := s.findSegmentWhichStartsBeforeOrAt(t, false)
+	if segmentIdx == -1 {
+		segmentIdx = 0
 	} else if !contains {
-		if entryIdx == len(s.entries)-1 {
+		if segmentIdx == len(s.segments)-1 {
 			return nil
 		}
-		entryIdx++
+		segmentIdx++
 	}
 
 	if nonEmpty {
-		// TODO: this is ineffective... but I just hope there will be not much of empty entries
-		for entryIdx < len(s.entries) && s.entries[entryIdx].Empty {
-			entryIdx++
+		// TODO: this is ineffective... but I just hope there will be not much of empty segments
+		for segmentIdx < len(s.segments) && s.segments[segmentIdx].Empty {
+			segmentIdx++
 		}
-		if entryIdx == len(s.entries) {
+		if segmentIdx == len(s.segments) {
 			return nil
 		}
 	}
 
-	return s.entries[entryIdx]
+	return s.segments[segmentIdx]
 }
 
 func (s *Series[Data, Index]) AddData(data []Data) error {
@@ -225,252 +225,252 @@ func (s *Series[Data, Index]) AddData(data []Data) error {
 }
 
 func (s *Series[Data, Index]) AddPeriod(periodStart, periodEnd Index, data []Data) error {
-	if len(s.entries) == 0 {
-		newEntry := NewSeriesEntry[Data, Index](s.dataFactory, s.getIdx, s.idxCmp, s.areContinuous)
+	if len(s.segments) == 0 {
+		newSegment := NewSeriesSegment[Data, Index](s.dataFactory, s.getIdx, s.idxCmp, s.areContinuous)
 
-		if err := newEntry.MergePeriod(periodStart, periodEnd, data); err != nil {
+		if err := newSegment.MergePeriod(periodStart, periodEnd, data); err != nil {
 			return err
 		}
 
-		s.entries = append(s.entries, newEntry)
+		s.segments = append(s.segments, newSegment)
 
 		return nil
 	}
 
-	intersectFirstEntryIdx, firstContains := s.findEntryWhichStartsBeforeOrAt(periodStart, true)
-	intersectLastEntryIdx, lastContains := s.findEntryWhichStartsBeforeOrAt(periodEnd, true)
+	intersectFirstSegmentIdx, firstContains := s.findSegmentWhichStartsBeforeOrAt(periodStart, true)
+	intersectLastSegmentIdx, lastContains := s.findSegmentWhichStartsBeforeOrAt(periodEnd, true)
 
-	endsBeforeStart := intersectLastEntryIdx == -1
+	endsBeforeStart := intersectLastSegmentIdx == -1
 	if endsBeforeStart {
 		return s.insertBeforeStart(periodStart, periodEnd, data)
 	}
 
-	startsBeforeStart := intersectFirstEntryIdx == -1
+	startsBeforeStart := intersectFirstSegmentIdx == -1
 	if startsBeforeStart {
-		return s.mergeWithStart(periodStart, periodEnd, data, intersectLastEntryIdx)
+		return s.mergeWithStart(periodStart, periodEnd, data, intersectLastSegmentIdx)
 	}
 
-	lastEntryIdx := len(s.entries) - 1
+	lastSegmentIdx := len(s.segments) - 1
 
-	if intersectFirstEntryIdx == lastEntryIdx && !firstContains {
+	if intersectFirstSegmentIdx == lastSegmentIdx && !firstContains {
 		return s.insertAfterEnd(periodStart, periodEnd, data)
 	}
 
-	if intersectLastEntryIdx == lastEntryIdx && !lastContains {
-		return s.mergeWithEnd(periodStart, periodEnd, data, intersectFirstEntryIdx)
+	if intersectLastSegmentIdx == lastSegmentIdx && !lastContains {
+		return s.mergeWithEnd(periodStart, periodEnd, data, intersectFirstSegmentIdx)
 	}
 
-	return s.mergeWithinRange(periodStart, periodEnd, data, intersectFirstEntryIdx, intersectLastEntryIdx)
+	return s.mergeWithinRange(periodStart, periodEnd, data, intersectFirstSegmentIdx, intersectLastSegmentIdx)
 }
 
 func (s *Series[Data, Index]) Restore(state *SeriesState[Data, Index]) error {
-	for _, entry := range state.Entries {
-		if s.idxCmp(entry.PeriodStart, entry.PeriodEnd) > 0 {
-			return errors.Errorf("storage error: entry period start is greater than period end: %v > %v", entry.PeriodStart, entry.PeriodEnd)
+	for _, segment := range state.Segments {
+		if s.idxCmp(segment.PeriodStart, segment.PeriodEnd) > 0 {
+			return errors.Errorf("storage error: segment period start is greater than period end: %v > %v", segment.PeriodStart, segment.PeriodEnd)
 		}
 	}
 
-	entries := make([]*SeriesEntry[Data, Index], 0, len(state.Entries))
+	segments := make([]*SeriesSegment[Data, Index], 0, len(state.Segments))
 
-	for _, entry := range state.Entries {
-		e := NewSeriesEntry[Data, Index](s.dataFactory, s.getIdx, s.idxCmp, s.areContinuous)
-		e.Restore(entry)
+	for _, segment := range state.Segments {
+		e := NewSeriesSegment[Data, Index](s.dataFactory, s.getIdx, s.idxCmp, s.areContinuous)
+		e.Restore(segment)
 
-		entries = append(entries, e)
+		segments = append(segments, e)
 	}
 
-	s.entries = entries
+	s.segments = segments
 
 	return nil
 }
 
 func (s *Series[Data, Index]) insertBeforeStart(periodStart, periodEnd Index, data []Data) error {
-	newEntry := NewSeriesEntry[Data, Index](s.dataFactory, s.getIdx, s.idxCmp, s.areContinuous)
+	newSegment := NewSeriesSegment[Data, Index](s.dataFactory, s.getIdx, s.idxCmp, s.areContinuous)
 
-	if err := newEntry.MergePeriod(periodStart, periodEnd, data); err != nil {
+	if err := newSegment.MergePeriod(periodStart, periodEnd, data); err != nil {
 		return err
 	}
 
-	s.entries = slices.Insert(s.entries, 0, newEntry)
+	s.segments = slices.Insert(s.segments, 0, newSegment)
 
 	return nil
 }
 
-func (s *Series[Data, Index]) mergeWithStart(periodStart, periodEnd Index, data []Data, intersectLastEntryIdx int) error {
-	var newFirstEntry *SeriesEntry[Data, Index]
+func (s *Series[Data, Index]) mergeWithStart(periodStart, periodEnd Index, data []Data, intersectLastSegmentIdx int) error {
+	var newFirstSegment *SeriesSegment[Data, Index]
 
-	intersectLastEntry := s.entries[intersectLastEntryIdx]
-	if intersectLastEntry.CanBeMergedWith(periodEnd) {
-		if err := intersectLastEntry.MergePeriod(periodStart, periodEnd, data); err != nil {
+	intersectLastSegment := s.segments[intersectLastSegmentIdx]
+	if intersectLastSegment.CanBeMergedWith(periodEnd) {
+		if err := intersectLastSegment.MergePeriod(periodStart, periodEnd, data); err != nil {
 			return err
 		}
 
-		newFirstEntry = intersectLastEntry
+		newFirstSegment = intersectLastSegment
 	} else {
-		newFirstEntry = NewSeriesEntry(s.dataFactory, s.getIdx, s.idxCmp, s.areContinuous)
+		newFirstSegment = NewSeriesSegment(s.dataFactory, s.getIdx, s.idxCmp, s.areContinuous)
 
-		if err := newFirstEntry.MergePeriod(periodStart, periodEnd, data); err != nil {
+		if err := newFirstSegment.MergePeriod(periodStart, periodEnd, data); err != nil {
 			return err
 		}
 	}
 
-	s.entries = slices.Delete(s.entries, 0, intersectLastEntryIdx)
-	s.entries[0] = newFirstEntry
+	s.segments = slices.Delete(s.segments, 0, intersectLastSegmentIdx)
+	s.segments[0] = newFirstSegment
 
 	return nil
 }
 
 func (s *Series[Data, Index]) insertAfterEnd(periodStart, periodEnd Index, data []Data) error {
-	newEntry := NewSeriesEntry[Data, Index](s.dataFactory, s.getIdx, s.idxCmp, s.areContinuous)
+	newSegment := NewSeriesSegment[Data, Index](s.dataFactory, s.getIdx, s.idxCmp, s.areContinuous)
 
-	if err := newEntry.MergePeriod(periodStart, periodEnd, data); err != nil {
+	if err := newSegment.MergePeriod(periodStart, periodEnd, data); err != nil {
 		return err
 	}
 
-	s.entries = append(s.entries, newEntry)
+	s.segments = append(s.segments, newSegment)
 
 	return nil
 }
 
-func (s *Series[Data, Index]) mergeWithEnd(periodStart, periodEnd Index, data []Data, intersectFirstEntryIdx int) error {
-	lastEntriesToDelete := len(s.entries) - intersectFirstEntryIdx - 1
+func (s *Series[Data, Index]) mergeWithEnd(periodStart, periodEnd Index, data []Data, intersectFirstSegmentIdx int) error {
+	lastSegmentsToDelete := len(s.segments) - intersectFirstSegmentIdx - 1
 
-	intersectFirstEntry := s.entries[intersectFirstEntryIdx]
-	if intersectFirstEntry.CanBeMergedWith(periodStart) {
-		if err := intersectFirstEntry.MergePeriod(periodStart, periodEnd, data); err != nil {
+	intersectFirstSegment := s.segments[intersectFirstSegmentIdx]
+	if intersectFirstSegment.CanBeMergedWith(periodStart) {
+		if err := intersectFirstSegment.MergePeriod(periodStart, periodEnd, data); err != nil {
 			return err
 		}
 	} else {
-		lastEntriesToDelete--
+		lastSegmentsToDelete--
 
-		newEntry := NewSeriesEntry(s.dataFactory, s.getIdx, s.idxCmp, s.areContinuous)
+		newSegment := NewSeriesSegment(s.dataFactory, s.getIdx, s.idxCmp, s.areContinuous)
 
-		if err := newEntry.MergePeriod(periodStart, periodEnd, data); err != nil {
+		if err := newSegment.MergePeriod(periodStart, periodEnd, data); err != nil {
 			return err
 		}
 
-		s.entries[intersectFirstEntryIdx+1] = newEntry
+		s.segments[intersectFirstSegmentIdx+1] = newSegment
 	}
 
-	s.entries = slices.Delete(s.entries, len(s.entries)-lastEntriesToDelete, len(s.entries))
+	s.segments = slices.Delete(s.segments, len(s.segments)-lastSegmentsToDelete, len(s.segments))
 
 	return nil
 }
 
-func (s *Series[Data, Index]) mergeWithinRange(periodStart, periodEnd Index, data []Data, intersectFirstEntryIdx, intersectLastEntryIdx int) error {
-	firstEntry := s.entries[intersectFirstEntryIdx]
-	canBeMergedWithFirst := firstEntry.CanBeMergedWith(periodStart)
+func (s *Series[Data, Index]) mergeWithinRange(periodStart, periodEnd Index, data []Data, intersectFirstSegmentIdx, intersectLastSegmentIdx int) error {
+	firstSegment := s.segments[intersectFirstSegmentIdx]
+	canBeMergedWithFirst := firstSegment.CanBeMergedWith(periodStart)
 
-	if intersectFirstEntryIdx == intersectLastEntryIdx && canBeMergedWithFirst {
-		return firstEntry.MergePeriod(periodStart, periodEnd, data)
+	if intersectFirstSegmentIdx == intersectLastSegmentIdx && canBeMergedWithFirst {
+		return firstSegment.MergePeriod(periodStart, periodEnd, data)
 	}
 
-	lastEntry := s.entries[intersectLastEntryIdx]
-	canBeMergedWithLast := lastEntry.CanBeMergedWith(periodEnd)
+	lastSegment := s.segments[intersectLastSegmentIdx]
+	canBeMergedWithLast := lastSegment.CanBeMergedWith(periodEnd)
 
 	if canBeMergedWithFirst && canBeMergedWithLast {
-		firstEntryData, err := firstEntry.Data.GetEndOpen(firstEntry.PeriodStart, periodStart)
+		firstSegmentData, err := firstSegment.Data.GetEndOpen(firstSegment.PeriodStart, periodStart)
 		if err != nil {
 			return err
 		}
 
-		data = append(firstEntryData, data...)
-		periodStart = s.getSmallerIndex(firstEntry.PeriodStart, periodStart)
+		data = append(firstSegmentData, data...)
+		periodStart = s.getSmallerIndex(firstSegment.PeriodStart, periodStart)
 
-		if err := lastEntry.MergePeriod(periodStart, periodEnd, data); err != nil {
+		if err := lastSegment.MergePeriod(periodStart, periodEnd, data); err != nil {
 			return err
 		}
 
-		s.entries[intersectFirstEntryIdx] = lastEntry
+		s.segments[intersectFirstSegmentIdx] = lastSegment
 
-		deleteFrom := intersectFirstEntryIdx + 1
-		entriesToDelete := intersectLastEntryIdx - intersectFirstEntryIdx
-		s.entries = slices.Delete(s.entries, deleteFrom, deleteFrom+entriesToDelete)
+		deleteFrom := intersectFirstSegmentIdx + 1
+		segmentsToDelete := intersectLastSegmentIdx - intersectFirstSegmentIdx
+		s.segments = slices.Delete(s.segments, deleteFrom, deleteFrom+segmentsToDelete)
 
 		return nil
 	}
 
-	//var resultingEntryIdx int
-	//entriesToDelete := intersectLastEntryIdx - intersectFirstEntryIdx
+	//var resultingSegmentIdx int
+	//segmentsToDelete := intersectLastSegmentIdx - intersectFirstSegmentIdx
 
 	if canBeMergedWithFirst {
-		if err := firstEntry.MergePeriod(periodStart, periodEnd, data); err != nil {
+		if err := firstSegment.MergePeriod(periodStart, periodEnd, data); err != nil {
 			return err
 		}
 
-		deleteFrom := intersectFirstEntryIdx + 1
-		entriesToDelete := intersectLastEntryIdx - intersectFirstEntryIdx
-		s.entries = slices.Delete(s.entries, deleteFrom, deleteFrom+entriesToDelete)
+		deleteFrom := intersectFirstSegmentIdx + 1
+		segmentsToDelete := intersectLastSegmentIdx - intersectFirstSegmentIdx
+		s.segments = slices.Delete(s.segments, deleteFrom, deleteFrom+segmentsToDelete)
 
 		return nil
 	}
 
 	if canBeMergedWithLast {
-		if err := lastEntry.MergePeriod(periodStart, periodEnd, data); err != nil {
+		if err := lastSegment.MergePeriod(periodStart, periodEnd, data); err != nil {
 			return err
 		}
 
-		deleteFrom := intersectFirstEntryIdx + 1
-		entriesToDelete := intersectLastEntryIdx - intersectFirstEntryIdx - 1
-		s.entries = slices.Delete(s.entries, deleteFrom, deleteFrom+entriesToDelete)
+		deleteFrom := intersectFirstSegmentIdx + 1
+		segmentsToDelete := intersectLastSegmentIdx - intersectFirstSegmentIdx - 1
+		s.segments = slices.Delete(s.segments, deleteFrom, deleteFrom+segmentsToDelete)
 
 		return nil
 	}
 
-	newEntry := NewSeriesEntry(s.dataFactory, s.getIdx, s.idxCmp, s.areContinuous)
+	newSegment := NewSeriesSegment(s.dataFactory, s.getIdx, s.idxCmp, s.areContinuous)
 
-	if err := newEntry.MergePeriod(periodStart, periodEnd, data); err != nil {
+	if err := newSegment.MergePeriod(periodStart, periodEnd, data); err != nil {
 		return err
 	}
 
-	if intersectFirstEntryIdx == intersectLastEntryIdx {
-		s.entries = slices.Insert(s.entries, intersectFirstEntryIdx+1, newEntry)
+	if intersectFirstSegmentIdx == intersectLastSegmentIdx {
+		s.segments = slices.Insert(s.segments, intersectFirstSegmentIdx+1, newSegment)
 		return nil
 	}
 
-	s.entries[intersectFirstEntryIdx+1] = newEntry
-	entriesToDelete := intersectLastEntryIdx - intersectFirstEntryIdx - 1
-	s.entries = slices.Delete(s.entries, intersectFirstEntryIdx+2, intersectFirstEntryIdx+2+entriesToDelete)
+	s.segments[intersectFirstSegmentIdx+1] = newSegment
+	segmentsToDelete := intersectLastSegmentIdx - intersectFirstSegmentIdx - 1
+	s.segments = slices.Delete(s.segments, intersectFirstSegmentIdx+2, intersectFirstSegmentIdx+2+segmentsToDelete)
 
 	return nil
 }
 
-func (s *Series[Data, Index]) findEntryWhichStartsBeforeOrAt(t Index, includeContinuous bool) (_ int, contains bool) { // PeriodStart >= t
-	entryWhichStartsLaterOrAt := sort.Search(len(s.entries), func(i int) bool {
-		return s.idxCmp(s.entries[i].PeriodStart, t) >= 0
+func (s *Series[Data, Index]) findSegmentWhichStartsBeforeOrAt(t Index, includeContinuous bool) (_ int, contains bool) { // PeriodStart >= t
+	segmentWhichStartsLaterOrAt := sort.Search(len(s.segments), func(i int) bool {
+		return s.idxCmp(s.segments[i].PeriodStart, t) >= 0
 	})
 
-	// if entryWhichStartsLaterOrAt == 0 {
-	// 	if s.cmp(s.entries[0].PeriodStart, t) > 0 && (!includeContinuous || !s.areContinuous(t, s.entries[0].PeriodStart)) {
+	// if segmentWhichStartsLaterOrAt == 0 {
+	// 	if s.cmp(s.segments[0].PeriodStart, t) > 0 && (!includeContinuous || !s.areContinuous(t, s.segments[0].PeriodStart)) {
 	// 		return -1, false
 	// 	}
 	// 	return 0, true
 	// }
 
-	evenLastEntryStartsBefore := entryWhichStartsLaterOrAt == len(s.entries)
+	evenLastSegmentStartsBefore := segmentWhichStartsLaterOrAt == len(s.segments)
 
-	if evenLastEntryStartsBefore {
-		lastEntry := entryWhichStartsLaterOrAt - 1
-		lastEntryEnd := s.entries[lastEntry].PeriodEnd
-		contains := s.idxCmp(t, lastEntryEnd) <= 0 || (includeContinuous && s.areContinuous(lastEntryEnd, t))
-		return lastEntry, contains
+	if evenLastSegmentStartsBefore {
+		lastSegment := segmentWhichStartsLaterOrAt - 1
+		lastSegmentEnd := s.segments[lastSegment].PeriodEnd
+		contains := s.idxCmp(t, lastSegmentEnd) <= 0 || (includeContinuous && s.areContinuous(lastSegmentEnd, t))
+		return lastSegment, contains
 	}
 
-	entryStartsLater := s.idxCmp(s.entries[entryWhichStartsLaterOrAt].PeriodStart, t) > 0
-	areContinuous := includeContinuous && s.areContinuous(t, s.entries[entryWhichStartsLaterOrAt].PeriodStart)
-	entryStartsAt := !entryStartsLater || areContinuous
+	segmentStartsLater := s.idxCmp(s.segments[segmentWhichStartsLaterOrAt].PeriodStart, t) > 0
+	areContinuous := includeContinuous && s.areContinuous(t, s.segments[segmentWhichStartsLaterOrAt].PeriodStart)
+	segmentStartsAt := !segmentStartsLater || areContinuous
 
-	if entryStartsAt {
-		return entryWhichStartsLaterOrAt, true
+	if segmentStartsAt {
+		return segmentWhichStartsLaterOrAt, true
 	}
-	if entryWhichStartsLaterOrAt == 0 && !areContinuous {
+	if segmentWhichStartsLaterOrAt == 0 && !areContinuous {
 		return -1, false
 	}
 
-	entry := entryWhichStartsLaterOrAt - 1
-	entryEnd := s.entries[entry].PeriodEnd
-	contains = s.idxCmp(t, entryEnd) <= 0 || (includeContinuous && s.areContinuous(entryEnd, t))
-	return entry, contains
+	segment := segmentWhichStartsLaterOrAt - 1
+	segmentEnd := s.segments[segment].PeriodEnd
+	contains = s.idxCmp(t, segmentEnd) <= 0 || (includeContinuous && s.areContinuous(segmentEnd, t))
+	return segment, contains
 }
 
 func (s *Series[Data, Index]) getSmallerIndex(idx1, idx2 Index) Index {
@@ -482,5 +482,5 @@ func (s *Series[Data, Index]) getSmallerIndex(idx1, idx2 Index) Index {
 }
 
 type SeriesState[Data any, Index any] struct {
-	Entries []*SeriesEntryFields[Data, Index]
+	Segments []*SeriesSegmentFields[Data, Index]
 }

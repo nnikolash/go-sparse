@@ -51,7 +51,7 @@ func TestSparseSeries_SimpleMerge(t *testing.T) {
 	if ok := t.Run("InitialAdd", func(t *testing.T) {
 		err := series.AddData(duplicate([]int{20}))
 		require.NoError(t, err)
-		callerPrintln("TestSparseSeries_SimpleMerge", 0, series.EntriesString())
+		callerPrintln("TestSparseSeries_SimpleMerge", 0, series.SegmentsString())
 
 		verifyInitialAdd = func(t *testing.T, series *sparse.Series[int, int]) {
 			res, err := series.Get(20, 20)
@@ -86,7 +86,7 @@ func TestSparseSeries_SimpleMerge(t *testing.T) {
 	if ok := t.Run("AddEmptyRight1", func(t *testing.T) {
 		err := series.AddPeriod(20, 25, duplicate([]int{20}))
 		require.NoError(t, err)
-		callerPrintln("TestSparseSeries_SimpleMerge", 0, series.EntriesString())
+		callerPrintln("TestSparseSeries_SimpleMerge", 0, series.SegmentsString())
 		emptyRightAdded1 = true
 
 		verifyAddEmptyRight1 = func(t *testing.T, series *sparse.Series[int, int]) {
@@ -108,7 +108,7 @@ func TestSparseSeries_SimpleMerge(t *testing.T) {
 	if ok := t.Run("AddEmptyRight2", func(t *testing.T) {
 		err := series.AddPeriod(25, 30, duplicate([]int{30}))
 		require.NoError(t, err)
-		callerPrintln("TestSparseSeries_SimpleMerge", 0, series.EntriesString())
+		callerPrintln("TestSparseSeries_SimpleMerge", 0, series.SegmentsString())
 
 		verifyAddEmptyRight2 = func(t *testing.T, series *sparse.Series[int, int]) {
 			res, err := series.Get(20, 30)
@@ -129,7 +129,7 @@ func TestSparseSeries_SimpleMerge(t *testing.T) {
 	if ok := t.Run("AddEmptyLeft1", func(t *testing.T) {
 		err := series.AddPeriod(15, 20, duplicate([]int{20}))
 		require.NoError(t, err)
-		callerPrintln("TestSparseSeries_SimpleMerge", 0, series.EntriesString())
+		callerPrintln("TestSparseSeries_SimpleMerge", 0, series.SegmentsString())
 		emptyLeftAdded1 = true
 
 		verifyAddEmptyLeft1 = func(t *testing.T, series *sparse.Series[int, int]) {
@@ -151,7 +151,7 @@ func TestSparseSeries_SimpleMerge(t *testing.T) {
 	if ok := t.Run("AddEmptyLeft2", func(t *testing.T) {
 		err := series.AddPeriod(10, 15, duplicate([]int{10}))
 		require.NoError(t, err)
-		callerPrintln("TestSparseSeries_SimpleMerge", 0, series.EntriesString())
+		callerPrintln("TestSparseSeries_SimpleMerge", 0, series.SegmentsString())
 
 		verifyAddEmptyLeft2 = func(t *testing.T, series *sparse.Series[int, int]) {
 			res, err := series.Get(10, 30)
@@ -172,7 +172,7 @@ func TestSparseSeries_SimpleMerge(t *testing.T) {
 	if ok := t.Run("MergeEnd", func(t *testing.T) {
 		err := series.AddData(duplicate([]int{30, 40, 50}))
 		require.NoError(t, err)
-		callerPrintln("TestSparseSeries_SimpleMerge", 0, series.EntriesString())
+		callerPrintln("TestSparseSeries_SimpleMerge", 0, series.SegmentsString())
 
 		verifyMergeEnd = func(t *testing.T, series *sparse.Series[int, int]) {
 			res, err := series.Get(30, 50)
@@ -195,7 +195,7 @@ func TestSparseSeries_SimpleMerge(t *testing.T) {
 	if ok := t.Run("MergeStart", func(t *testing.T) {
 		err := series.AddData(duplicate([]int{-10, 0, 10}))
 		require.NoError(t, err)
-		callerPrintln("TestSparseSeries_SimpleMerge", 0, series.EntriesString())
+		callerPrintln("TestSparseSeries_SimpleMerge", 0, series.SegmentsString())
 
 		verifyMergeStart = func(t *testing.T, series *sparse.Series[int, int]) {
 			res, err := series.Get(-10, 10)
@@ -222,7 +222,7 @@ func TestSparseSeries_SimpleMerge(t *testing.T) {
 	if ok := t.Run("MergeInRangeDifferent", func(t *testing.T) {
 		err := series.AddData(duplicate([]int{5, 15, 25}))
 		require.NoError(t, err)
-		callerPrintln("TestSparseSeries_SimpleMerge", 0, series.EntriesString())
+		callerPrintln("TestSparseSeries_SimpleMerge", 0, series.SegmentsString())
 		modified = true
 
 		verifyMergeInRangeDifferent = func(t *testing.T, series *sparse.Series[int, int]) {
@@ -243,7 +243,7 @@ func TestSparseSeries_SimpleMerge(t *testing.T) {
 		//err := series.AddData(duplicate([]int{30, 35, 40, 45, 50}))
 		err := series.AddData(duplicate([]int{30, 40, 50}))
 		require.NoError(t, err)
-		callerPrintln("TestSparseSeries_SimpleMerge", 0, series.EntriesString())
+		callerPrintln("TestSparseSeries_SimpleMerge", 0, series.SegmentsString())
 
 		verifyMergeInRangeSame = func(t *testing.T, series *sparse.Series[int, int]) {
 			res, err := series.Get(30, 50)
@@ -336,25 +336,25 @@ func TestSparseSeries_SimpleSparseMergeInMiddle(t *testing.T) {
 
 	series := intSparseSeries()
 
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 
 	err := series.AddData([]int{10, 20, 30})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err := series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []int{10, 20, 30}, res)
 
 	err = series.AddData([]int{40, 50, 60})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(40, 60)
 	require.NoError(t, err)
 	require.Equal(t, []int{40, 50, 60}, res)
 
 	err = series.AddData([]int{70, 80, 90})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(70, 90)
 	require.NoError(t, err)
 	require.Equal(t, []int{70, 80, 90}, res)
@@ -368,7 +368,7 @@ func TestSparseSeries_SimpleSparseMergeInMiddle(t *testing.T) {
 
 	err = series.AddData([]int{30, 31, 32})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(10, 32)
 	require.NoError(t, err)
 	require.Equal(t, []int{10, 20, 30, 31, 32}, res)
@@ -377,7 +377,7 @@ func TestSparseSeries_SimpleSparseMergeInMiddle(t *testing.T) {
 
 	err = series.AddData([]int{38, 39, 40})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(38, 60)
 	require.NoError(t, err)
 	require.Equal(t, []int{38, 39, 40, 50, 60}, res)
@@ -386,7 +386,7 @@ func TestSparseSeries_SimpleSparseMergeInMiddle(t *testing.T) {
 
 	err = series.AddData([]int{60, 61, 62})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(40, 62)
 	require.NoError(t, err)
 	require.Equal(t, []int{40, 50, 60, 61, 62}, res)
@@ -395,7 +395,7 @@ func TestSparseSeries_SimpleSparseMergeInMiddle(t *testing.T) {
 
 	err = series.AddData([]int{68, 69, 70})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(68, 90)
 	require.NoError(t, err)
 	require.Equal(t, []int{68, 69, 70, 80, 90}, res)
@@ -404,13 +404,13 @@ func TestSparseSeries_SimpleSparseMergeInMiddle(t *testing.T) {
 
 	err = series.AddData([]int{32, 35, 38})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	err = series.AddData([]int{62, 65, 68})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(10, 90)
-	require.NoError(t, err, series.EntriesString())
-	require.Equal(t, []int{10, 20, 30, 31, 32, 35, 38, 39, 40, 50, 60, 61, 62, 65, 68, 69, 70, 80, 90}, res, series.EntriesString())
+	require.NoError(t, err, series.SegmentsString())
+	require.Equal(t, []int{10, 20, 30, 31, 32, 35, 38, 39, 40, 50, 60, 61, 62, 65, 68, 69, 70, 80, 90}, res, series.SegmentsString())
 }
 
 func TestSparseSeries_SimpleSparseMergeInMiddleMultipleHoles(t *testing.T) {
@@ -420,28 +420,28 @@ func TestSparseSeries_SimpleSparseMergeInMiddleMultipleHoles(t *testing.T) {
 
 	err := series.AddData([]int{10, 20, 30})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err := series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []int{10, 20, 30}, res)
 
 	err = series.AddData([]int{40, 50, 60})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(40, 60)
 	require.NoError(t, err)
 	require.Equal(t, []int{40, 50, 60}, res)
 
 	err = series.AddData([]int{70, 80, 90})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(70, 90)
 	require.NoError(t, err)
 	require.Equal(t, []int{70, 80, 90}, res)
 
 	err = series.AddData([]int{20, 30, 40, 50, 60, 70, 80})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(10, 90)
 	require.NoError(t, err)
 	require.Equal(t, []int{10, 20, 30, 40, 50, 60, 70, 80, 90}, res)
@@ -454,28 +454,28 @@ func TestSparseSeries_SimpleSparseMergeInMiddleMultipleHolesOuside(t *testing.T)
 
 	err := series.AddData([]int{10, 20, 30})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err := series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []int{10, 20, 30}, res)
 
 	err = series.AddData([]int{50, 60})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(50, 60)
 	require.NoError(t, err)
 	require.Equal(t, []int{50, 60}, res)
 
 	err = series.AddData([]int{80, 90})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(80, 90)
 	require.NoError(t, err)
 	require.Equal(t, []int{80, 90}, res)
 
 	err = series.AddData([]int{0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(10, 90)
 	require.NoError(t, err)
 	require.Equal(t, []int{10, 20, 30, 40, 50, 60, 70, 80, 90}, res)
@@ -491,28 +491,28 @@ func TestSparseSeries_SimpleSparseMergeInRangeInHole(t *testing.T) {
 
 	err := series.AddData([]int{10, 20, 30})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err := series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []int{10, 20, 30}, res)
 
 	err = series.AddData([]int{80, 90})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(80, 90)
 	require.NoError(t, err)
 	require.Equal(t, []int{80, 90}, res)
 
 	err = series.AddData([]int{50, 60})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(50, 60)
 	require.NoError(t, err)
 	require.Equal(t, []int{50, 60}, res)
 
 	err = series.AddData([]int{0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(10, 90)
 	require.NoError(t, err)
 	require.Equal(t, []int{10, 20, 30, 40, 50, 60, 70, 80, 90}, res)
@@ -760,7 +760,7 @@ func TestSparseSeries_SparseMerge(t *testing.T) {
 	if ok := t.Run("MergeToInitial", func(t *testing.T) {
 		err = series.AddData([]int{8, 9, 10})
 		require.NoError(t, err)
-		callerPrintln("TestSparseSeries_SparseMerge", 0, series.EntriesString())
+		callerPrintln("TestSparseSeries_SparseMerge", 0, series.SegmentsString())
 
 		res, err := series.Get(8, 30)
 		require.NoError(t, err)
@@ -768,7 +768,7 @@ func TestSparseSeries_SparseMerge(t *testing.T) {
 
 		err = series.AddData([]int{7, 8})
 		require.NoError(t, err)
-		callerPrintln("TestSparseSeries_SparseMerge", 0, series.EntriesString())
+		callerPrintln("TestSparseSeries_SparseMerge", 0, series.SegmentsString())
 
 		res, err = series.Get(7, 30)
 		require.NoError(t, err)
@@ -776,7 +776,7 @@ func TestSparseSeries_SparseMerge(t *testing.T) {
 
 		err = series.AddData([]int{30, 31, 32})
 		require.NoError(t, err)
-		callerPrintln("TestSparseSeries_SparseMerge", 0, series.EntriesString())
+		callerPrintln("TestSparseSeries_SparseMerge", 0, series.SegmentsString())
 
 		res, err = series.Get(7, 32)
 		require.NoError(t, err)
@@ -784,7 +784,7 @@ func TestSparseSeries_SparseMerge(t *testing.T) {
 
 		err = series.AddData([]int{32, 33})
 		require.NoError(t, err)
-		callerPrintln("TestSparseSeries_SparseMerge", 0, series.EntriesString())
+		callerPrintln("TestSparseSeries_SparseMerge", 0, series.SegmentsString())
 
 		verifyMergeToInitial = func(t *testing.T, series *sparse.Series[int, int]) {
 			res, err = series.Get(7, 33)
@@ -801,7 +801,7 @@ func TestSparseSeries_SparseMerge(t *testing.T) {
 	if ok := t.Run("CoverLeftHole1", func(t *testing.T) {
 		err = series.AddData([]int{0, 5, 7})
 		require.NoError(t, err)
-		callerPrintln("TestSparseSeries_SparseMerge", 0, series.EntriesString())
+		callerPrintln("TestSparseSeries_SparseMerge", 0, series.SegmentsString())
 		leftHole1Covered = true
 
 		verifyCoverLeftHole1 = func(t *testing.T, series *sparse.Series[int, int]) {
@@ -823,7 +823,7 @@ func TestSparseSeries_SparseMerge(t *testing.T) {
 	if ok := t.Run("CoverLeftHole2", func(t *testing.T) {
 		err = series.AddData([]int{-30, -20})
 		require.NoError(t, err)
-		callerPrintln("TestSparseSeries_SparseMerge", 0, series.EntriesString())
+		callerPrintln("TestSparseSeries_SparseMerge", 0, series.SegmentsString())
 		leftHole2Covered = true
 
 		verifyCoverLeftHole2 = func(t *testing.T, series *sparse.Series[int, int]) {
@@ -845,7 +845,7 @@ func TestSparseSeries_SparseMerge(t *testing.T) {
 	if ok := t.Run("CoverRightHole1", func(t *testing.T) {
 		err = series.AddData([]int{20, 30, 31, 32, 33, 40, 50})
 		require.NoError(t, err)
-		callerPrintln("TestSparseSeries_SparseMerge", 0, series.EntriesString())
+		callerPrintln("TestSparseSeries_SparseMerge", 0, series.SegmentsString())
 		rightHole1Covered = true
 
 		verifyCoverRightHole1 = func(t *testing.T, series *sparse.Series[int, int]) {
@@ -867,7 +867,7 @@ func TestSparseSeries_SparseMerge(t *testing.T) {
 	if ok := t.Run("CoverRightHole2", func(t *testing.T) {
 		err = series.AddData([]int{60, 65, 70})
 		require.NoError(t, err)
-		callerPrintln("TestSparseSeries_SparseMerge", 0, series.EntriesString())
+		callerPrintln("TestSparseSeries_SparseMerge", 0, series.SegmentsString())
 		rightHole2Covered = true
 
 		verifyCoverRightHole2 = func(t *testing.T, series *sparse.Series[int, int]) {
@@ -894,28 +894,28 @@ func TestSparseSeries_SparseMergeInRangeFirstAndLastDiff(t *testing.T) {
 
 	err := series.AddData([]int{10, 20, 30})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err := series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []int{10, 20, 30}, res)
 
 	err = series.AddData([]int{40, 50, 60})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(40, 60)
 	require.NoError(t, err)
 	require.Equal(t, []int{40, 50, 60}, res)
 
 	err = series.AddData([]int{70, 80, 90})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(70, 90)
 	require.NoError(t, err)
 	require.Equal(t, []int{70, 80, 90}, res)
 
 	err = series.AddData([]int{20, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(10, 90)
 	require.NoError(t, err)
 	require.Equal(t, []int{10, 20, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 90}, res)
@@ -928,14 +928,14 @@ func TestSparseSeries_SparseMergeInRangeFirstAndLastSame(t *testing.T) {
 
 	err := series.AddData([]int{10, 20, 30})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err := series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []int{10, 20, 30}, res)
 
 	err = series.AddData([]int{12, 15, 17, 20})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []int{10, 12, 15, 17, 20, 30}, res)
@@ -948,28 +948,28 @@ func TestSparseSeries_SparseMergeInRangeFirst(t *testing.T) {
 
 	err := series.AddData([]int{10, 20, 30})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err := series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []int{10, 20, 30}, res)
 
 	err = series.AddData([]int{40, 50, 60})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(40, 60)
 	require.NoError(t, err)
 	require.Equal(t, []int{40, 50, 60}, res)
 
 	err = series.AddData([]int{70, 80, 90})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(70, 90)
 	require.NoError(t, err)
 	require.Equal(t, []int{70, 80, 90}, res)
 
 	err = series.AddData([]int{20, 25, 30, 35, 40, 45, 50, 55, 60, 65})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(10, 65)
 	require.NoError(t, err)
 	require.Equal(t, []int{10, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65}, res)
@@ -989,28 +989,28 @@ func TestSparseSeries_SparseMergeInRangeLast(t *testing.T) {
 
 	err := series.AddData([]int{10, 20, 30})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err := series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []int{10, 20, 30}, res)
 
 	err = series.AddData([]int{40, 50, 60})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(40, 60)
 	require.NoError(t, err)
 	require.Equal(t, []int{40, 50, 60}, res)
 
 	err = series.AddData([]int{70, 80, 90})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(70, 90)
 	require.NoError(t, err)
 	require.Equal(t, []int{70, 80, 90}, res)
 
 	err = series.AddData([]int{35, 40, 45, 50, 55, 60, 65, 70, 75, 80})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(35, 90)
 	require.NoError(t, err)
 	require.Equal(t, []int{35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 90}, res)
@@ -1028,28 +1028,28 @@ func TestSparseSeries_SparseMergeInRangeNoHitDiff(t *testing.T) {
 
 	err := series.AddData([]int{10, 20, 30})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err := series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []int{10, 20, 30}, res)
 
 	err = series.AddData([]int{40, 50, 60})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(40, 60)
 	require.NoError(t, err)
 	require.Equal(t, []int{40, 50, 60}, res)
 
 	err = series.AddData([]int{70, 80, 90})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(70, 90)
 	require.NoError(t, err)
 	require.Equal(t, []int{70, 80, 90}, res)
 
 	err = series.AddData([]int{35, 40, 45, 50, 55, 60, 65})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(35, 65)
 	require.NoError(t, err)
 	require.Equal(t, []int{35, 40, 45, 50, 55, 60, 65}, res)
@@ -1071,21 +1071,21 @@ func TestSparseSeries_SparseMergeInRangeNoHitSame(t *testing.T) {
 
 	err := series.AddData([]int{10, 20, 30})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err := series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []int{10, 20, 30}, res)
 
 	err = series.AddData([]int{40, 50, 60})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(40, 60)
 	require.NoError(t, err)
 	require.Equal(t, []int{40, 50, 60}, res)
 
 	err = series.AddData([]int{32, 35, 38})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(32, 38)
 	require.NoError(t, err)
 	require.Equal(t, []int{32, 35, 38}, res)
@@ -1432,14 +1432,14 @@ func TestSparseSeries_Continuous_Ends(t *testing.T) {
 
 	err := series.AddData([]int{10, 20, 30})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err := series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []int{10, 20, 30}, res)
 
 	err = series.AddData([]int{7, 8, 9})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(7, 30)
 	require.NoError(t, err)
 	require.Equal(t, []int{7, 8, 9, 10, 20, 30}, res)
@@ -1458,28 +1458,28 @@ func TestSparseSeries_Continuous_Ends(t *testing.T) {
 
 	err = series.AddData([]int{31, 32, 33})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(7, 33)
 	require.NoError(t, err)
 	require.Equal(t, []int{7, 8, 9, 10, 20, 30, 31, 32, 33}, res)
 
 	err = series.AddData([]int{6})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(6, 33)
 	require.NoError(t, err)
 	require.Equal(t, []int{6, 7, 8, 9, 10, 20, 30, 31, 32, 33}, res)
 
 	err = series.AddData([]int{34})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(6, 34)
 	require.NoError(t, err)
 	require.Equal(t, []int{6, 7, 8, 9, 10, 20, 30, 31, 32, 33, 34}, res)
 
 	err = series.AddPeriod(3, 5, []int{4})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(3, 34)
 	require.NoError(t, err)
 	require.Equal(t, []int{4, 6, 7, 8, 9, 10, 20, 30, 31, 32, 33, 34}, res)
@@ -1501,7 +1501,7 @@ func TestSparseSeries_Continuous_Ends(t *testing.T) {
 
 	err = series.AddPeriod(35, 37, []int{36})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(3, 37)
 	require.NoError(t, err)
 	require.Equal(t, []int{4, 6, 7, 8, 9, 10, 20, 30, 31, 32, 33, 34, 36}, res)
@@ -1529,14 +1529,14 @@ func TestSparseSeries_Continuous_MiddleStart(t *testing.T) {
 
 	err := series.AddData([]int{10, 20, 30})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err := series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []int{10, 20, 30}, res)
 
 	err = series.AddData([]int{40, 50, 60})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(40, 60)
 	require.NoError(t, err)
 	require.Equal(t, []int{40, 50, 60}, res)
@@ -1546,7 +1546,7 @@ func TestSparseSeries_Continuous_MiddleStart(t *testing.T) {
 
 	err = series.AddData([]int{31, 32, 33})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(10, 33)
 	require.NoError(t, err)
 	require.Equal(t, []int{10, 20, 30, 31, 32, 33}, res)
@@ -1566,7 +1566,7 @@ func TestSparseSeries_Continuous_MiddleStart(t *testing.T) {
 
 	err = series.AddData([]int{37, 38, 39})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(37, 60)
 	require.NoError(t, err)
 	require.Equal(t, []int{37, 38, 39, 40, 50, 60}, res)
@@ -1591,7 +1591,7 @@ func TestSparseSeries_Continuous_MiddleStart(t *testing.T) {
 
 	err = series.AddData([]int{34, 35, 36})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(34, 36)
 	require.NoError(t, err)
 	require.Equal(t, []int{34, 35, 36}, res)
@@ -1626,14 +1626,14 @@ func TestSparseSeries_OverwriteStart(t *testing.T) {
 
 	err := series.AddData([]Elem{{10, "a"}, {20, "b"}, {30, "c"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err := series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{10, "a"}, {20, "b"}, {30, "c"}}, res)
 
 	err = series.AddData([]Elem{{5, "z1"}, {10, "z2"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(5, 30)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{5, "z1"}, {10, "z2"}, {20, "b"}, {30, "c"}}, res)
@@ -1655,14 +1655,14 @@ func TestSparseSeries_OverwriteEnd(t *testing.T) {
 
 	err := series.AddData([]Elem{{10, "a"}, {20, "b"}, {30, "c"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err := series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{10, "a"}, {20, "b"}, {30, "c"}}, res)
 
 	err = series.AddData([]Elem{{30, "d"}, {40, "e"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(10, 40)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{10, "a"}, {20, "b"}, {30, "d"}, {40, "e"}}, res)
@@ -1684,21 +1684,21 @@ func TestSparseSeries_OverwriteHoles(t *testing.T) {
 
 	err := series.AddData([]Elem{{50, "d"}, {60, "e"}, {70, "f"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err := series.Get(50, 70)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{50, "d"}, {60, "e"}, {70, "f"}}, res)
 
 	err = series.AddData([]Elem{{10, "a"}, {20, "b"}, {30, "c"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{10, "a"}, {20, "b"}, {30, "c"}}, res)
 
 	err = series.AddData([]Elem{{90, "g"}, {100, "h"}, {110, "i"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(90, 110)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{90, "g"}, {100, "h"}, {110, "i"}}, res)
@@ -1708,7 +1708,7 @@ func TestSparseSeries_OverwriteHoles(t *testing.T) {
 
 	err = series.AddData([]Elem{{25, "z1"}, {30, "z2"}, {40, "z3"}, {50, "z4"}, {55, "z5"}, {60, "z6"}, {70, "z7"}, {80, "z8"}, {90, "z9"}, {95, "z10"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(10, 110)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{10, "a"}, {20, "b"}, {25, "z1"}, {30, "z2"}, {40, "z3"}, {50, "z4"}, {55, "z5"}, {60, "z6"}, {70, "z7"}, {80, "z8"}, {90, "z9"}, {95, "z10"}, {100, "h"}, {110, "i"}}, res)
@@ -1730,21 +1730,21 @@ func TestSparseSeries_OverwriteIsle(t *testing.T) {
 
 	err := series.AddData([]Elem{{50, "d"}, {60, "e"}, {70, "f"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err := series.Get(50, 70)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{50, "d"}, {60, "e"}, {70, "f"}}, res)
 
 	err = series.AddData([]Elem{{10, "a"}, {20, "b"}, {30, "c"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{10, "a"}, {20, "b"}, {30, "c"}}, res)
 
 	err = series.AddData([]Elem{{90, "g"}, {100, "h"}, {110, "i"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(90, 110)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{90, "g"}, {100, "h"}, {110, "i"}}, res)
@@ -1754,14 +1754,14 @@ func TestSparseSeries_OverwriteIsle(t *testing.T) {
 
 	err = series.AddData([]Elem{{40, "z3"}, {50, "z4"}, {55, "z5"}, {60, "z6"}, {70, "z7"}, {80, "z8"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(40, 80)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{40, "z3"}, {50, "z4"}, {55, "z5"}, {60, "z6"}, {70, "z7"}, {80, "z8"}}, res)
 
 	err = series.AddData([]Elem{{10, "a"}, {20, "b"}, {30, "c"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{10, "a"}, {20, "b"}, {30, "c"}}, res)
@@ -1790,21 +1790,21 @@ func TestSparseSeries_OverwriteMiddle(t *testing.T) {
 
 	err := series.AddData([]Elem{{50, "d"}, {60, "e"}, {70, "f"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err := series.Get(50, 70)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{50, "d"}, {60, "e"}, {70, "f"}}, res)
 
 	err = series.AddData([]Elem{{10, "a"}, {20, "b"}, {30, "c"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{10, "a"}, {20, "b"}, {30, "c"}}, res)
 
 	err = series.AddData([]Elem{{90, "g"}, {100, "h"}, {110, "i"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(90, 110)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{90, "g"}, {100, "h"}, {110, "i"}}, res)
@@ -1814,14 +1814,14 @@ func TestSparseSeries_OverwriteMiddle(t *testing.T) {
 
 	err = series.AddData([]Elem{{55, "z3"}, {60, "z4"}, {65, "z5"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(50, 70)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{50, "d"}, {55, "z3"}, {60, "z4"}, {65, "z5"}, {70, "f"}}, res)
 
 	err = series.AddData([]Elem{{10, "a"}, {20, "b"}, {30, "c"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{10, "a"}, {20, "b"}, {30, "c"}}, res)
@@ -1850,14 +1850,14 @@ func TestSparseSeries_OverwriteInRangeStart(t *testing.T) {
 
 	err := series.AddData([]Elem{{50, "d"}, {60, "e"}, {70, "f"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err := series.Get(50, 70)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{50, "d"}, {60, "e"}, {70, "f"}}, res)
 
 	err = series.AddData([]Elem{{10, "a"}, {20, "b"}, {30, "c"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{10, "a"}, {20, "b"}, {30, "c"}}, res)
@@ -1867,7 +1867,7 @@ func TestSparseSeries_OverwriteInRangeStart(t *testing.T) {
 
 	err = series.AddData([]Elem{{40, "z3"}, {50, "z4"}, {55, "z5"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(40, 70)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{40, "z3"}, {50, "z4"}, {55, "z5"}, {60, "e"}, {70, "f"}}, res)
@@ -1896,14 +1896,14 @@ func TestSparseSeries_OverwriteInRangeEnd(t *testing.T) {
 
 	err := series.AddData([]Elem{{50, "d"}, {60, "e"}, {70, "f"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err := series.Get(50, 70)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{50, "d"}, {60, "e"}, {70, "f"}}, res)
 
 	err = series.AddData([]Elem{{10, "a"}, {20, "b"}, {30, "c"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(10, 30)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{10, "a"}, {20, "b"}, {30, "c"}}, res)
@@ -1913,7 +1913,7 @@ func TestSparseSeries_OverwriteInRangeEnd(t *testing.T) {
 
 	err = series.AddData([]Elem{{25, "z1"}, {30, "z2"}, {40, "z3"}})
 	require.NoError(t, err)
-	println(0, series.EntriesString())
+	println(0, series.SegmentsString())
 	res, err = series.Get(10, 40)
 	require.NoError(t, err)
 	require.Equal(t, []Elem{{10, "a"}, {20, "b"}, {25, "z1"}, {30, "z2"}, {40, "z3"}}, res)
